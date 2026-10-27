@@ -1,0 +1,28 @@
+{
+  "name": "store-rating-platform",
+  "version": "1.0.0",
+  "description": "Full-stack Store Rating and Merchant Reputation Platform",
+  "scripts": {
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "install:all": "npm run install:server && npm run install:client",
+    "server": "cd server && npm run dev",
+    "server:start": "cd server && npm start",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "test": "cd server && npm test",
+    "test:qa": "cd server && node tests/full-qa-suite.js",
+    "test:security": "cd server && node tests/security-audit.test.js"
+  },
+  "keywords": [
+    "fullstack",
+    "react",
+    "nodejs",
+    "express",
+    "mysql",
+    "jwt",
+    "rbac"
+  ],
+  "author": "Full Stack Engineer",
+  "license": "ISC"
+}
