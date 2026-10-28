@@ -1,12 +1,31 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+let sqlite3 = null;
+try {
+  sqlite3 = require('sqlite3').verbose();
+} catch (err) {
+  console.warn('[Notice] Native sqlite3 binary could not be loaded:', err.message);
+  console.log('[Notice] Activating Pure JavaScript In-Memory Database Engine.');
+}
+
+const { createPureMemoryDb } = require('./pureMemoryDb');
 
 let dbInstance = null;
 
 const createSqliteAdapter = () => {
   if (dbInstance) return dbInstance;
 
-  const db = new sqlite3.Database(':memory:');
+  if (!sqlite3) {
+    dbInstance = createPureMemoryDb();
+    return dbInstance;
+  }
+
+  let db = null;
+  try {
+    db = new sqlite3.Database(':memory:');
+  } catch (err) {
+    console.warn('[Notice] sqlite3 memory DB initialization failed, falling back to Pure Memory DB:', err.message);
+    dbInstance = createPureMemoryDb();
+    return dbInstance;
+  }
 
   // Enable foreign keys
   db.run('PRAGMA foreign_keys = ON;');
