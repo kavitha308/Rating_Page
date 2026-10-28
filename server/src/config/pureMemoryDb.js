@@ -309,8 +309,8 @@ const createPureMemoryDb = () => {
       return [rows, []];
     }
 
-    // 19. Count queries
-    if (upper.includes('COUNT(*) AS TOTAL') || upper.includes('COUNT(R.ID) AS TOTAL') || upper.includes('COUNT(S.ID) AS TOTAL') || upper.includes('COUNT(U.ID) AS TOTAL')) {
+    // 19. Count queries (must explicitly start with SELECT COUNT to avoid matching queries with COUNT(...) AS total_ratings)
+    if (upper.startsWith('SELECT COUNT')) {
       if (upper.includes('FROM RATINGS')) {
         let count = ratings.length;
         if (params.length > 0 && typeof params[0] === 'number') {
@@ -320,16 +320,18 @@ const createPureMemoryDb = () => {
       }
       if (upper.includes('FROM USERS')) {
         let count = users.length;
-        if (params.length > 0 && typeof params[0] === 'string' && ['ADMIN', 'STORE_OWNER', 'USER'].includes(params[0])) {
-          count = users.filter((u) => u.role === params[0]).length;
+        const roleParam = params.find((p) => ['ADMIN', 'STORE_OWNER', 'USER'].includes(p));
+        if (roleParam) {
+          count = users.filter((u) => u.role === roleParam).length;
         }
         return [[{ total: count }], []];
       }
       if (upper.includes('FROM STORES')) {
         let count = stores.length;
-        if (params.length > 0 && typeof params[0] === 'string' && params[0].includes('%')) {
-          const q = params[0].replace(/%/g, '').toLowerCase();
-          count = stores.filter((s) => s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q)).length;
+        const searchParam = params.find((p) => typeof p === 'string' && p.includes('%'));
+        if (searchParam) {
+          const q = searchParam.replace(/%/g, '').toLowerCase();
+          count = stores.filter((s) => s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q) || (s.email && s.email.toLowerCase().includes(q))).length;
         }
         return [[{ total: count }], []];
       }
@@ -389,7 +391,7 @@ const createPureMemoryDb = () => {
       const searchParam = params.find((p) => typeof p === 'string' && p.includes('%'));
       if (searchParam) {
         const q = searchParam.replace(/%/g, '').toLowerCase();
-        list = list.filter((s) => s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q));
+        list = list.filter((s) => s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q) || (s.email && s.email.toLowerCase().includes(q)));
       }
 
       let rows = list.map((s) => {
@@ -413,6 +415,7 @@ const createPureMemoryDb = () => {
           owner_email: owner ? owner.email : null,
           created_at: s.created_at,
           updated_at: s.updated_at,
+          average_rating: agg.average_rating,
           overall_rating: agg.average_rating,
           total_ratings: agg.total_ratings,
           user_submitted_rating: userRating
@@ -420,12 +423,22 @@ const createPureMemoryDb = () => {
       });
 
       // Sort
-      if (upper.includes('ORDER BY OVERALL_RATING DESC') || upper.includes('ORDER BY RATING DESC')) {
+      if (upper.includes('ORDER BY OVERALL_RATING DESC') || upper.includes('ORDER BY AVERAGE_RATING DESC') || upper.includes('ORDER BY RATING DESC')) {
         rows.sort((a, b) => b.overall_rating - a.overall_rating);
-      } else if (upper.includes('ORDER BY NAME DESC')) {
+      } else if (upper.includes('ORDER BY OVERALL_RATING ASC') || upper.includes('ORDER BY AVERAGE_RATING ASC') || upper.includes('ORDER BY RATING ASC')) {
+        rows.sort((a, b) => a.overall_rating - b.overall_rating);
+      } else if (upper.includes('ORDER BY NAME DESC') || upper.includes('ORDER BY S.NAME DESC')) {
         rows.sort((a, b) => b.name.localeCompare(a.name));
-      } else if (upper.includes('ORDER BY NAME ASC')) {
+      } else if (upper.includes('ORDER BY NAME ASC') || upper.includes('ORDER BY S.NAME ASC')) {
         rows.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (upper.includes('ORDER BY EMAIL DESC') || upper.includes('ORDER BY S.EMAIL DESC')) {
+        rows.sort((a, b) => b.email.localeCompare(a.email));
+      } else if (upper.includes('ORDER BY EMAIL ASC') || upper.includes('ORDER BY S.EMAIL ASC')) {
+        rows.sort((a, b) => a.email.localeCompare(b.email));
+      } else if (upper.includes('ORDER BY ADDRESS DESC') || upper.includes('ORDER BY S.ADDRESS DESC')) {
+        rows.sort((a, b) => b.address.localeCompare(a.address));
+      } else if (upper.includes('ORDER BY ADDRESS ASC') || upper.includes('ORDER BY S.ADDRESS ASC')) {
+        rows.sort((a, b) => a.address.localeCompare(b.address));
       }
 
       // Pagination
