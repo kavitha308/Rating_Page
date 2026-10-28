@@ -1,3 +1,4 @@
+console.log('Booting Store Rating Platform API...');
 const app = require('./app');
 const config = require('./config/env');
 const db = require('./config/db');
@@ -19,10 +20,9 @@ const server = app.listen(config.port, async () => {
   // Verify database connection
   const dbHealth = await db.testConnection();
   if (dbHealth.connected) {
-    console.log(` [Database] MySQL connected successfully.`);
+    console.log(` [Database] Database connected successfully.`);
   } else {
-    console.warn(` [Database Warning] Could not connect to MySQL: ${dbHealth.error}`);
-    console.warn(` Please ensure MySQL is running and your .env credentials match.`);
+    console.warn(` [Database Warning] Could not connect to database: ${dbHealth.error}`);
   }
 });
 

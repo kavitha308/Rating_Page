@@ -4,8 +4,10 @@ const config = require('./env');
 let pool = null;
 let dbInterface = null;
 
-// Use SQLite in test mode or when explicitly enabled
-if (config.nodeEnv === 'test' || process.env.USE_SQLITE === 'true') {
+// Default to SQLite unless explicitly set to USE_SQLITE=false
+const useMysql = process.env.USE_SQLITE === 'false';
+
+if (!useMysql || config.nodeEnv === 'test') {
   const { createSqliteAdapter } = require('./sqliteAdapter');
   dbInterface = createSqliteAdapter();
 } else {
