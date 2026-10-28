@@ -83,7 +83,18 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setSessionExpiredMessage('');
     const response = await authService.login({ email, password });
-    const { token: receivedToken, user: receivedUser } = response.data;
+
+    // Safely extract token and user whether nested under data or at top level
+    const payload = response?.data || response;
+    const receivedToken = payload?.token;
+    const receivedUser = payload?.user;
+
+    if (!receivedToken || !receivedUser) {
+      throw new Error(
+        response?.message ||
+        'Authentication response missing token or user data. Please ensure the backend is connected.'
+      );
+    }
 
     localStorage.setItem('token', receivedToken);
     localStorage.setItem('user', JSON.stringify(receivedUser));

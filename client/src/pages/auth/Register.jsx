@@ -90,12 +90,16 @@ const Register = () => {
 
     setLoading(true);
     try {
-      await register({
+      const response = await register({
         name: formData.name.trim(),
         email: formData.email.trim(),
         address: formData.address.trim(),
         password: formData.password
       });
+
+      if (typeof response === 'string' && (response.includes('<!DOCTYPE') || response.includes('<html'))) {
+        throw new Error('API connection error: Received HTML page instead of API response. Please set VITE_API_BASE_URL.');
+      }
 
       setRegistrationSuccess(true);
     } catch (err) {

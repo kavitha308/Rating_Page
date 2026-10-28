@@ -1,8 +1,16 @@
 import axios from 'axios';
 
+// Resolve API Base URL with smart fallback and trailing slash normalization
+const resolveBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (!envUrl) return '/api';
+  const trimmed = envUrl.trim().replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+};
+
 // Create base Axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: resolveBaseUrl(),
   headers: {
     'Content-Type': 'application/json'
   },
@@ -24,6 +32,17 @@ api.interceptors.request.use(
 // Response Interceptor: Handle standardized response and session expiration
 api.interceptors.response.use(
   (response) => {
+    // Detect if SPA rewrite caught the request and returned index.html instead of backend JSON
+    if (
+      typeof response.data === 'string' &&
+      (response.data.includes('<!DOCTYPE') || response.data.includes('<html'))
+    ) {
+      const err = new Error(
+        'Backend connection error: The request received an HTML page instead of API JSON. Please set VITE_API_BASE_URL in your Render Frontend Environment tab (e.g. https://your-backend.onrender.com/api) and redeploy.'
+      );
+      err.status = 502;
+      return Promise.reject(err);
+    }
     return response.data;
   },
   (error) => {

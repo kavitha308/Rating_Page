@@ -27,8 +27,18 @@ app.use(
       // In development/test mode, allow requests from localhost dev ports
       const isDevOrTest = config.nodeEnv !== 'production';
       const isLocalhost = origin && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'));
+      const isRenderDomain = origin && origin.endsWith('.onrender.com');
 
-      if (!origin || origin === config.clientUrl || (isDevOrTest && isLocalhost)) {
+      const normalizedOrigin = origin ? origin.replace(/\/+$/, '') : null;
+      const configuredClient = config.clientUrl ? config.clientUrl.replace(/\/+$/, '') : null;
+
+      if (
+        !origin ||
+        config.clientUrl === '*' ||
+        normalizedOrigin === configuredClient ||
+        isRenderDomain ||
+        (isDevOrTest && isLocalhost)
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS policy'));
