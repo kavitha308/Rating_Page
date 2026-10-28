@@ -12,7 +12,6 @@ import {
   Menu,
   X,
   ChevronRight,
-  Activity,
   Star,
   ExternalLink
 } from 'lucide-react';
@@ -133,19 +132,6 @@ const AdminLayout = () => {
               );
             })}
           </nav>
-
-          {/* System Health Status Indicator */}
-          <div className="admin-system-box">
-            <div className="admin-system-header">
-              <Activity size={14} className="admin-system-pulse-icon" />
-              <span>System Status</span>
-            </div>
-            <div className="admin-system-status">
-              <span className="status-dot-pulse" />
-              <span>Engine Online & Healthy</span>
-            </div>
-            <div className="admin-system-meta">MySQL 8.0 · REST API v1.0</div>
-          </div>
         </div>
 
         {/* Bottom Admin User Profile Card - Links to full Profile page */}
