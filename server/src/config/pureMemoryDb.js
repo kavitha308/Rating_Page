@@ -196,6 +196,13 @@ const createPureMemoryDb = () => {
       return [dist, []];
     }
 
+    // 12b. Single store aggregates: SELECT ROUND(COALESCE(AVG(rating), 0), 2) AS average_rating, COUNT(id) AS total_ratings FROM ratings WHERE store_id = ?
+    if (upper.includes('FROM RATINGS') && (upper.includes('AVG(RATING)') || upper.includes('COUNT(ID)')) && (upper.includes('WHERE STORE_ID =') || upper.includes('WHERE STORE_ID='))) {
+      const storeId = Number(params[0]);
+      const agg = getStoreAggregates(storeId);
+      return [[{ average_rating: agg.average_rating, total_ratings: agg.total_ratings }], []];
+    }
+
     // 13. My Rating: SELECT id, rating FROM ratings WHERE user_id = ? AND store_id = ?
     if (upper.includes('FROM RATINGS') && upper.includes('WHERE USER_ID =') && upper.includes('STORE_ID =')) {
       const userId = Number(params[0]);
@@ -286,7 +293,7 @@ const createPureMemoryDb = () => {
     }
 
     // 18. Store Owner Customer Ratings table
-    if (upper.includes('FROM RATINGS R') && (upper.includes('WHERE S.OWNER_ID =') || upper.includes('WHERE R.STORE_ID =') || upper.includes('WHERE R.STORE_ID IN'))) {
+    if (!upper.startsWith('SELECT COUNT') && upper.includes('FROM RATINGS R') && (upper.includes('WHERE S.OWNER_ID =') || upper.includes('WHERE R.STORE_ID =') || upper.includes('WHERE R.STORE_ID IN'))) {
       let list = [];
       if (upper.includes('WHERE S.OWNER_ID =')) {
         const ownerId = Number(params[0]);
@@ -302,12 +309,26 @@ const createPureMemoryDb = () => {
       }
 
       // Search filter if provided
-      if (params.length >= 3 && typeof params[1] === 'string' && params[1].includes('%')) {
-        const searchPattern = params[1].replace(/%/g, '').toLowerCase();
+      const searchParam = params.find((p) => typeof p === 'string' && p.includes('%'));
+      if (searchParam) {
+        const searchPattern = searchParam.replace(/%/g, '').toLowerCase();
         list = list.filter((r) => {
           const u = users.find((x) => x.id === r.user_id);
-          return u && (u.name.toLowerCase().includes(searchPattern) || u.email.toLowerCase().includes(searchPattern));
+          const s = stores.find((x) => x.id === r.store_id);
+          return (
+            (u && (u.name.toLowerCase().includes(searchPattern) || u.email.toLowerCase().includes(searchPattern))) ||
+            (s && s.name.toLowerCase().includes(searchPattern))
+          );
         });
+      }
+
+      // Sort
+      if (upper.includes('ORDER BY R.UPDATED_AT DESC') || upper.includes('ORDER BY R.CREATED_AT DESC') || upper.includes('ORDER BY CREATED_AT DESC')) {
+        list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      } else if (upper.includes('ORDER BY R.RATING DESC') || upper.includes('ORDER BY RATING DESC')) {
+        list.sort((a, b) => b.rating - a.rating);
+      } else if (upper.includes('ORDER BY R.RATING ASC') || upper.includes('ORDER BY RATING ASC')) {
+        list.sort((a, b) => a.rating - b.rating);
       }
 
       // Map rows with user info and store info
@@ -318,6 +339,7 @@ const createPureMemoryDb = () => {
           id: r.id,
           rating: r.rating,
           created_at: r.created_at,
+          updated_at: r.updated_at,
           user_id: u.id,
           user_name: u.name,
           user_email: u.email,
@@ -326,7 +348,12 @@ const createPureMemoryDb = () => {
         };
       });
 
-      // Pagination limits
+      // Handle LIMIT in SQL string (e.g. LIMIT 5)
+      if (upper.includes('LIMIT 5') && params.length === 1) {
+        rows = rows.slice(0, 5);
+      }
+
+      // Pagination limits via params
       if (params.length >= 2) {
         const limit = Number(params[params.length - 2]);
         const offset = Number(params[params.length - 1]);
@@ -348,6 +375,18 @@ const createPureMemoryDb = () => {
           if (upper.includes('AND R.STORE_ID =')) {
             const specificStoreId = Number(params[1]);
             filtered = filtered.filter((r) => Number(r.store_id) === specificStoreId);
+          }
+          const searchParam = params.find((p) => typeof p === 'string' && p.includes('%'));
+          if (searchParam) {
+            const searchPattern = searchParam.replace(/%/g, '').toLowerCase();
+            filtered = filtered.filter((r) => {
+              const u = users.find((x) => x.id === r.user_id);
+              const st = stores.find((x) => x.id === r.store_id);
+              return (
+                (u && (u.name.toLowerCase().includes(searchPattern) || u.email.toLowerCase().includes(searchPattern))) ||
+                (st && st.name.toLowerCase().includes(searchPattern))
+              );
+            });
           }
           count = filtered.length;
         } else if (params.length > 0 && typeof params[0] === 'number') {

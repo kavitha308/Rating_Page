@@ -192,8 +192,16 @@ const OwnerDashboard = () => {
     return <LoadingSpinner message="Loading Store Owner Dashboard..." />;
   }
 
+  if (dashboardError) {
+    return (
+      <div className="page-container" style={{ maxWidth: 760 }}>
+        <FormError message={dashboardError} type="danger" />
+      </div>
+    );
+  }
+
   // Handle case where administrator has not assigned a store yet (0 stores)
-  if (dashboardData && (!dashboardData.hasAssignedStore || managedStores.length === 0)) {
+  if (!dashboardData || !dashboardData.hasAssignedStore || managedStores.length === 0) {
     return (
       <div className="page-container" style={{ maxWidth: 760 }}>
         <EmptyState

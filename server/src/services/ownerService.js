@@ -71,8 +71,8 @@ const getOwnerDashboard = async (ownerUserId) => {
 
       return {
         ...store,
-        average_rating: parseFloat(aggregates[0].average_rating) || 0,
-        total_ratings: parseInt(aggregates[0].total_ratings, 10) || 0,
+        average_rating: aggregates?.[0]?.average_rating != null ? parseFloat(aggregates[0].average_rating) : 0,
+        total_ratings: aggregates?.[0]?.total_ratings != null ? parseInt(aggregates[0].total_ratings, 10) : 0,
         rating_distribution: starBreakdown
       };
     })
@@ -176,7 +176,7 @@ const getOwnerRatings = async (ownerUserId, queryParams = {}) => {
     ${whereClause}
   `;
   const [countResult] = await db.query(countSql, whereParams);
-  const total = countResult[0].total;
+  const total = countResult?.[0]?.total != null ? parseInt(countResult[0].total, 10) : 0;
 
   // Fetch ratings including store_id and store_name so ratings from multiple stores can be distinguished
   const fetchSql = `
@@ -239,8 +239,8 @@ const getOwnerStoreProfile = async (ownerUserId, storeId = null) => {
 
   return {
     ...targetStore,
-    average_rating: parseFloat(aggregates[0].average_rating) || 0,
-    total_ratings: parseInt(aggregates[0].total_ratings, 10) || 0
+    average_rating: aggregates?.[0]?.average_rating != null ? parseFloat(aggregates[0].average_rating) : 0,
+    total_ratings: aggregates?.[0]?.total_ratings != null ? parseInt(aggregates[0].total_ratings, 10) : 0
   };
 };
 
