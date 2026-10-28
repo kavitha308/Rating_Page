@@ -9,6 +9,9 @@
     "db:init": "node src/scripts/initDb.js",
     "test": "node tests/run-all-tests.js"
   },
+  "engines": {
+    "node": "20.x"
+  },
   "keywords": [
     "express",
     "mysql",
