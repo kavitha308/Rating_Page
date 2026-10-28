@@ -206,22 +206,22 @@ const AdminCreateStore = () => {
                 className="form-control has-left-icon"
               >
                 <option value="">-- No Store Owner (Leave unassigned) --</option>
-                {availableOwners.map((owner) => {
-                  const isAssigned = Boolean(owner.store);
-                  return (
-                    <option
-                      key={owner.id}
-                      value={owner.id}
-                      disabled={isAssigned}
-                    >
-                      {owner.name} ({owner.email}) {isAssigned ? `— [Already managing: ${owner.store.name}]` : '— [Available]'}
+                {loadingOwners ? (
+                  <option disabled>Loading store owners...</option>
+                ) : availableOwners.length === 0 ? (
+                  <option disabled>No store owners available. Create a Store Owner user first.</option>
+                ) : (
+                  availableOwners.map((owner) => (
+                    <option key={owner.id} value={owner.id}>
+                      {owner.name} ({owner.email})
+                      {owner.store_count > 0 ? ` [Manages ${owner.store_count} store${owner.store_count > 1 ? 's' : ''}]` : ''}
                     </option>
-                  );
-                })}
+                  ))
+                )}
               </select>
             </div>
             <div className="input-feedback is-hint" style={{ marginTop: '0.25rem' }}>
-              Only users with role STORE_OWNER who are not yet managing a store can be assigned.
+              Select an existing Store Owner. The same Store Owner can be assigned to multiple stores (1:N).
             </div>
           </div>
 

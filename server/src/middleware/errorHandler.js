@@ -24,8 +24,6 @@ const errorHandler = (err, req, res, next) => {
       message = 'You have already submitted a rating for this store. Please modify your existing rating instead.';
     } else if (err.sqlMessage && err.sqlMessage.includes('email')) {
       message = 'An account with this email address already exists.';
-    } else if (err.sqlMessage && err.sqlMessage.includes('uq_stores_owner')) {
-      message = 'This store owner is already assigned to another store.';
     } else {
       message = 'Duplicate entry detected. The resource already exists.';
     }

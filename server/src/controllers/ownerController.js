@@ -19,17 +19,22 @@ const getDashboard = async (req, res, next) => {
 };
 
 /**
- * Get list of users who rated owner's store
+ * Get list of users who rated owner's stores
  */
 const getRatings = async (req, res, next) => {
   try {
-    const { store, ratings, meta } = await ownerService.getOwnerRatings(req.user.id, req.query);
+    const result = await ownerService.getOwnerRatings(req.user.id, req.query);
 
     return successResponse(res, {
       statusCode: 200,
       message: 'Store ratings retrieved successfully.',
-      data: { store, ratings },
-      meta
+      data: {
+        storesCount: result.storesCount,
+        stores: result.stores,
+        store: result.store,
+        ratings: result.ratings
+      },
+      meta: result.meta
     });
   } catch (error) {
     next(error);
@@ -37,11 +42,12 @@ const getRatings = async (req, res, next) => {
 };
 
 /**
- * Get owner's assigned store profile
+ * Get owner's assigned store profile (supports optional storeId parameter with ownership check)
  */
 const getStore = async (req, res, next) => {
   try {
-    const store = await ownerService.getOwnerStoreProfile(req.user.id);
+    const storeId = req.params.storeId || req.query.storeId || null;
+    const store = await ownerService.getOwnerStoreProfile(req.user.id, storeId);
 
     return successResponse(res, {
       statusCode: 200,

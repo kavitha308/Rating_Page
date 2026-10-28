@@ -12,7 +12,10 @@ router.get('/dashboard', ownerController.getDashboard);
 // GET /api/owner/ratings (Paginated, sortable list of users who rated owner's store)
 router.get('/ratings', ownerController.getRatings);
 
-// GET /api/owner/store (Owner's assigned store profile)
+// GET /api/owner/store (Owner's primary assigned store profile)
 router.get('/store', ownerController.getStore);
+
+// GET /api/owner/store/:storeId (Specific store profile with ownership authorization check)
+router.get('/store/:storeId', ownerController.getStore);
 
 module.exports = router;

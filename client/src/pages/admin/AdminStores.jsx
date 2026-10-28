@@ -6,7 +6,7 @@ import SearchBar from '../../components/common/SearchBar';
 import Button from '../../components/common/Button';
 import FormError from '../../components/common/FormError';
 import StarRating from '../../components/common/StarRating';
-import { Store, PlusCircle } from 'lucide-react';
+import { Store, PlusCircle, Edit } from 'lucide-react';
 
 const AdminStores = () => {
   const navigate = useNavigate();
@@ -151,6 +151,22 @@ const AdminStores = () => {
           count={row.total_ratings}
           size={15}
         />
+      )
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      sortable: false,
+      align: 'right',
+      render: (_, row) => (
+        <Link
+          to={`/admin/stores/${row.id}/edit`}
+          className="btn btn-secondary btn-sm"
+          style={{ padding: '0.35rem 0.65rem', fontSize: '0.785rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+        >
+          <Edit size={13} />
+          <span>Edit</span>
+        </Link>
       )
     }
   ];

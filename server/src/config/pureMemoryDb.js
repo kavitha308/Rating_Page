@@ -250,20 +250,16 @@ const createPureMemoryDb = () => {
       }], []];
     }
 
-    // 17. INSERT INTO stores
+    // 17. INSERT INTO stores (allows multiple stores per owner)
     if (upper.startsWith('INSERT INTO STORES')) {
       const [name, email, address, ownerId] = params;
-      if (ownerId && stores.some((s) => s.owner_id === Number(ownerId))) {
-        const err = new Error('Store owner already assigned');
-        err.code = 'ER_DUP_ENTRY';
-        throw err;
-      }
+      const parsedOwnerId = (ownerId !== undefined && ownerId !== null && ownerId !== '') ? Number(ownerId) : null;
       const newStore = {
         id: nextStoreId++,
         name,
         email,
         address,
-        owner_id: ownerId ? Number(ownerId) : null,
+        owner_id: parsedOwnerId,
         created_at: new Date(),
         updated_at: new Date()
       };
@@ -271,10 +267,39 @@ const createPureMemoryDb = () => {
       return [{ insertId: newStore.id, affectedRows: 1 }, []];
     }
 
+    // 17b. UPDATE stores
+    if (upper.startsWith('UPDATE STORES SET')) {
+      const storeId = Number(params[params.length - 1]);
+      const s = stores.find((x) => x.id === storeId);
+      if (s) {
+        if (upper.includes('NAME =') && params.length >= 4) {
+          s.name = params[0];
+          s.email = params[1];
+          s.address = params[2];
+          s.owner_id = (params[3] !== undefined && params[3] !== null && params[3] !== '') ? Number(params[3]) : null;
+        } else if (upper.includes('OWNER_ID =') && params.length >= 2) {
+          s.owner_id = (params[0] !== undefined && params[0] !== null && params[0] !== '') ? Number(params[0]) : null;
+        }
+        s.updated_at = new Date();
+      }
+      return [{ affectedRows: s ? 1 : 0 }, []];
+    }
+
     // 18. Store Owner Customer Ratings table
-    if (upper.includes('FROM RATINGS R') && upper.includes('JOIN USERS U') && upper.includes('WHERE R.STORE_ID =')) {
-      const storeId = Number(params[0]);
-      let list = ratings.filter((r) => Number(r.store_id) === storeId);
+    if (upper.includes('FROM RATINGS R') && (upper.includes('WHERE S.OWNER_ID =') || upper.includes('WHERE R.STORE_ID =') || upper.includes('WHERE R.STORE_ID IN'))) {
+      let list = [];
+      if (upper.includes('WHERE S.OWNER_ID =')) {
+        const ownerId = Number(params[0]);
+        const ownerStoreIds = stores.filter((s) => Number(s.owner_id) === ownerId).map((s) => s.id);
+        list = ratings.filter((r) => ownerStoreIds.includes(Number(r.store_id)));
+        if (upper.includes('AND R.STORE_ID =')) {
+          const specificStoreId = Number(params[1]);
+          list = list.filter((r) => Number(r.store_id) === specificStoreId);
+        }
+      } else {
+        const storeId = Number(params[0]);
+        list = ratings.filter((r) => Number(r.store_id) === storeId);
+      }
 
       // Search filter if provided
       if (params.length >= 3 && typeof params[1] === 'string' && params[1].includes('%')) {
@@ -285,16 +310,19 @@ const createPureMemoryDb = () => {
         });
       }
 
-      // Map rows with user info
+      // Map rows with user info and store info
       let rows = list.map((r) => {
         const u = users.find((x) => x.id === r.user_id) || {};
+        const s = stores.find((x) => x.id === r.store_id) || {};
         return {
           id: r.id,
           rating: r.rating,
           created_at: r.created_at,
           user_id: u.id,
           user_name: u.name,
-          user_email: u.email
+          user_email: u.email,
+          store_id: s.id,
+          store_name: s.name
         };
       });
 
@@ -313,7 +341,16 @@ const createPureMemoryDb = () => {
     if (upper.startsWith('SELECT COUNT')) {
       if (upper.includes('FROM RATINGS')) {
         let count = ratings.length;
-        if (params.length > 0 && typeof params[0] === 'number') {
+        if (upper.includes('WHERE S.OWNER_ID =')) {
+          const ownerId = Number(params[0]);
+          const ownerStoreIds = stores.filter((s) => Number(s.owner_id) === ownerId).map((s) => s.id);
+          let filtered = ratings.filter((r) => ownerStoreIds.includes(Number(r.store_id)));
+          if (upper.includes('AND R.STORE_ID =')) {
+            const specificStoreId = Number(params[1]);
+            filtered = filtered.filter((r) => Number(r.store_id) === specificStoreId);
+          }
+          count = filtered.length;
+        } else if (params.length > 0 && typeof params[0] === 'number') {
           count = ratings.filter((r) => Number(r.store_id) === Number(params[0])).length;
         }
         return [[{ total: count }], []];

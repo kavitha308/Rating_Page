@@ -133,67 +133,97 @@ const AdminUserDetail = () => {
             </div>
           </div>
 
-          {/* If STORE_OWNER: Display their Store and Average Rating */}
-          {user.role === 'STORE_OWNER' && (
-            <div className="detail-card">
-              <h2 className="detail-section-title">
-                <Store size={20} color="var(--primary)" />
-                Managed Store & Rating Reputation
-              </h2>
+          {/* If STORE_OWNER: Display all assigned stores and their individual ratings */}
+          {user.role === 'STORE_OWNER' && (() => {
+            const assignedStores = user.stores && user.stores.length > 0
+              ? user.stores
+              : user.store
+              ? [user.store]
+              : [];
 
-              {user.store ? (
-                <div className="detail-grid">
-                  <div>
-                    <div className="detail-item-label">Store Name</div>
-                    <div className="detail-item-value" style={{ fontSize: '1.15rem' }}>
-                      {user.store.name}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="detail-item-label">Store Contact Email</div>
-                    <div className="detail-item-value" style={{ fontFamily: 'monospace' }}>
-                      {user.store.email}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="detail-item-label">Reputation Score</div>
-                    <div className="detail-item-value" style={{ marginTop: '0.35rem' }}>
-                      <StarRating
-                        rating={user.store.average_rating}
-                        count={user.store.total_ratings}
-                        size={18}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <div className="detail-item-label">Store Location</div>
-                    <div className="detail-item-value" style={{ fontWeight: 400 }}>
-                      {user.store.address}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  style={{
-                    background: 'var(--bg-subtle)',
-                    padding: '1.5rem',
-                    borderRadius: 'var(--radius-md)',
-                    textAlign: 'center'
-                  }}
-                >
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                    This user holds the <strong>STORE_OWNER</strong> role, but is not currently assigned to manage any store.
-                  </p>
-                  <Link to="/admin/stores/create" className="btn btn-primary" style={{ display: 'inline-flex' }}>
-                    <PlusCircle size={15} /> Create Store & Assign Owner
+            return (
+              <div className="detail-card">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <h2 className="detail-section-title" style={{ margin: 0 }}>
+                    <Store size={20} color="var(--primary)" />
+                    Assigned Stores ({assignedStores.length})
+                  </h2>
+                  <Link to="/admin/stores/create" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <PlusCircle size={14} /> Add Another Store for this Owner
                   </Link>
                 </div>
-              )}
-            </div>
-          )}
+
+                {assignedStores.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {assignedStores.map((st) => (
+                      <div
+                        key={st.id}
+                        style={{
+                          border: '1px solid var(--border-color)',
+                          borderRadius: 'var(--radius-md)',
+                          padding: '1.25rem',
+                          background: 'var(--bg-main)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-main)' }}>
+                              {st.name}
+                            </div>
+                            <div style={{ fontSize: '0.785rem', color: 'var(--text-muted)' }}>
+                              Store #{st.id} • {st.email}
+                            </div>
+                          </div>
+                          <Link
+                            to={`/admin/stores/${st.id}/edit`}
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.785rem' }}
+                          >
+                            Edit Store
+                          </Link>
+                        </div>
+
+                        <div className="detail-grid" style={{ marginTop: '0.75rem' }}>
+                          <div>
+                            <div className="detail-item-label">Reputation Score</div>
+                            <div className="detail-item-value" style={{ marginTop: '0.25rem' }}>
+                              <StarRating
+                                rating={st.average_rating}
+                                count={st.total_ratings}
+                                size={16}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="detail-item-label">Store Location</div>
+                            <div className="detail-item-value" style={{ fontWeight: 400, fontSize: '0.85rem' }}>
+                              {st.address}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      background: 'var(--bg-subtle)',
+                      padding: '1.5rem',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                      This user holds the <strong>STORE_OWNER</strong> role, but is not currently assigned to manage any store.
+                    </p>
+                    <Link to="/admin/stores/create" className="btn btn-primary" style={{ display: 'inline-flex' }}>
+                      <PlusCircle size={15} /> Create Store & Assign Owner
+                    </Link>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </>
       )}
     </div>

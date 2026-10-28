@@ -23,6 +23,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminUserDetail from './pages/admin/AdminUserDetail';
 import AdminStores from './pages/admin/AdminStores';
 import AdminCreateStore from './pages/admin/AdminCreateStore';
+import AdminEditStore from './pages/admin/AdminEditStore';
 
 // Store Owner Pages
 import OwnerDashboard from './pages/owner/OwnerDashboard';
@@ -108,6 +109,7 @@ function App() {
                   <Route path="/admin/users/:id" element={<AdminUserDetail />} />
                   <Route path="/admin/stores" element={<AdminStores />} />
                   <Route path="/admin/stores/create" element={<AdminCreateStore />} />
+                  <Route path="/admin/stores/:id/edit" element={<AdminEditStore />} />
                   <Route path="/admin/profile" element={<Profile />} />
                 </Route>
               </Route>

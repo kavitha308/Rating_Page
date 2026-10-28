@@ -64,10 +64,7 @@ CREATE TABLE stores (
     -- Primary Key
     CONSTRAINT pk_stores PRIMARY KEY (id),
 
-    -- Constraints: At most one store per store owner
-    CONSTRAINT uq_stores_owner UNIQUE (owner_id),
-
-    -- Foreign Key Constraint
+    -- Foreign Key Constraint (One Store Owner can manage multiple stores)
     -- If a user is removed, preserve the store listing by setting owner_id to NULL
     CONSTRAINT fk_stores_owner FOREIGN KEY (owner_id)
         REFERENCES users (id)
@@ -81,7 +78,8 @@ CREATE TABLE stores (
     -- Performance Indexes
     INDEX idx_stores_name (name),
     INDEX idx_stores_email (email),
-    INDEX idx_stores_address (address(191))
+    INDEX idx_stores_address (address(191)),
+    INDEX idx_stores_owner_id (owner_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================

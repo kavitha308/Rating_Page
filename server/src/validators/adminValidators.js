@@ -76,8 +76,45 @@ const userIdParamValidator = [
     .withMessage('Invalid user ID')
 ];
 
+const storeIdParamValidator = [
+  param('id')
+    .isInt({ min: 1 })
+    .withMessage('Invalid store ID')
+];
+
+const updateStoreValidator = [
+  body('name')
+    .trim()
+    .notEmpty()
+    .withMessage('Store name is required')
+    .isLength({ min: 20, max: 60 })
+    .withMessage('Store name must be between 20 and 60 characters long'),
+
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Store contact email is required')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please provide a valid email address'),
+
+  body('address')
+    .trim()
+    .notEmpty()
+    .withMessage('Store address is required')
+    .isLength({ max: 400 })
+    .withMessage('Store address cannot exceed 400 characters'),
+
+  body('ownerId')
+    .optional({ nullable: true })
+    .custom((val) => val === null || val === '' || (Number.isInteger(Number(val)) && Number(val) > 0))
+    .withMessage('Owner ID must be a valid user ID or null')
+];
+
 module.exports = {
   createUserValidator,
   createStoreValidator,
-  userIdParamValidator
+  updateStoreValidator,
+  userIdParamValidator,
+  storeIdParamValidator
 };

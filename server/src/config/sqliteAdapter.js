@@ -51,7 +51,7 @@ const createSqliteAdapter = () => {
         name TEXT NOT NULL,
         email TEXT NOT NULL,
         address TEXT NOT NULL,
-        owner_id INTEGER UNIQUE,
+        owner_id INTEGER,
         created_at DATETIME DEFAULT (datetime('now')),
         updated_at DATETIME DEFAULT (datetime('now')),
         FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE

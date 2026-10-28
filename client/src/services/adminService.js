@@ -49,6 +49,23 @@ export const adminService = {
   },
 
   /**
+   * Get single store by ID
+   * @param {number|string} id - Store ID
+   */
+  async getStoreById(id) {
+    return await api.get(`/admin/stores/${id}`);
+  },
+
+  /**
+   * Update existing store details or reassign owner
+   * @param {number|string} id - Store ID
+   * @param {Object} storeData - { name, email, address, ownerId }
+   */
+  async updateStore(id, storeData) {
+    return await api.put(`/admin/stores/${id}`, storeData);
+  },
+
+  /**
    * Get all rating logs
    * @param {Object} params - { search, sortBy, sortOrder, page, limit }
    */

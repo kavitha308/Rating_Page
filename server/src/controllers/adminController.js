@@ -108,6 +108,41 @@ const createStore = async (req, res, next) => {
 };
 
 /**
+ * Get single store by ID
+ */
+const getStoreById = async (req, res, next) => {
+  try {
+    const store = await adminService.getStoreById(req.params.id);
+
+    return successResponse(res, {
+      statusCode: 200,
+      message: 'Store retrieved successfully.',
+      data: { store }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Update store by admin
+ */
+const updateStore = async (req, res, next) => {
+  try {
+    const { name, email, address, ownerId } = req.body;
+    const store = await adminService.updateStore(req.params.id, { name, email, address, ownerId });
+
+    return successResponse(res, {
+      statusCode: 200,
+      message: store.message,
+      data: { store }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Get all ratings for admin
  */
 const getRatings = async (req, res, next) => {
@@ -131,6 +166,8 @@ module.exports = {
   getUserById,
   createUser,
   getStores,
+  getStoreById,
   createStore,
+  updateStore,
   getRatings
 };
